@@ -1,10 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 
 from cart.utils.cart import Cart
 from .forms import QuantityForm
 from shop.models import Product
+import os
 
 
 @login_required
@@ -32,3 +34,4 @@ def remove_from_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     cart.remove(product)
     return redirect('cart:show_cart')
+

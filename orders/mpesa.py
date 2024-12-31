@@ -1,12 +1,3 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-
-from django.views.decorators.http import require_POST
-from django.utils import timezone
-
-from .models import Order, OrderItem
-from cart.utils.cart import Cart
 import base64
 import requests
 from datetime import datetime
@@ -37,8 +28,6 @@ def generate_password():
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     password = base64.b64encode(f"{business_shortcode}{passkey}{timestamp}".encode()).decode()
     return password, timestamp
-
-# Function to initiate an STK Push
 
 # Function to initiate an STK Push
 def simulate_mpesa_express(amount, phone_number):
@@ -75,64 +64,9 @@ def simulate_mpesa_express(amount, phone_number):
         print("Error simulating M-Pesa Express:", e)
         raise
 
-@login_required
-def create_order(request):
-    cart = Cart(request)
-    order = Order.objects.create(user=request.user)
-    print(get_access_token())
-    print(order)
-
-    if request.method == 'POST':
-        phone_number = request.POST.get('phone_number')
-        amount = request.POST.get('amount')
-        # ensure number is in format 2541 or 2547
-        if phone_number.startswith('07'):
-            phone_number = '254' + phone_number[1:]
-        elif phone_number.startswith('7'):
-            phone_number = '254' + phone_number
-        elif phone_number.startswith('+254'):
-            phone_number = phone_number[1:]
-        # remove any spaces
-        phone_number = phone_number.replace(' ', '')
-        print(phone_number, amount)
-        simulate_mpesa_express(int(amount), phone_number)
-        
-    for item in cart:
-        OrderItem.objects.create(
-            order=order, product=item['product'],
-            price=item['price'], quantity=item['quantity']
-    )
-    return redirect('orders:pay_order', order_id=order.id)
-
-
-@login_required
-def checkout(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-    context = {'title':'Checkout' ,'order':order}
-    return render(request, 'checkout.html', context)
-
-
-@login_required
-def fake_payment(request, order_id):
-    cart = Cart(request)
-    order = get_object_or_404(Order, id=order_id)
-    order.status = True
-    order.save()
-    return redirect('orders:user_orders')
-
-
-@login_required
-def user_orders(request):
-    orders = request.user.orders.all()
-    context = {'title':'Orders', 'orders': orders}
-    return render(request, 'user_orders.html', context)
-
-def process_mpesa_payment(request):
-    if request.method == 'POST':
-        phone_number = request.POST.get('phone_number')
-        amount = request.POST.get('amount')
-        context = {
-            "message": "Payment processed successfully",
-        }
-        return redirect('orders:user_orders')
-    return redirect('cart:view_cart')
+if __name__ == "__main__":
+    try :
+        simulate_mpesa_express(100, '254113159363')
+    except Exception as e:
+        print("Error:", e)
+        raise
